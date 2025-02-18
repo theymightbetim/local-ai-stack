@@ -1,0 +1,57 @@
+services:
+    ollama:
+      container_name: ollama
+      image: ollama/ollama:latest
+      ports:
+        - "11434:11434"
+      volumes:
+        - ollama_data:/root/.ollama
+      restart: unless-stopped
+      networks:
+        - my_network
+      environment:
+        - OLLAMA_KEEP_ALIVE=24h
+      deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                count: 1
+                capabilities: [gpu]
+    n8n:
+      container_name: n8n
+      image: n8nio/n8n:latest
+      user: node
+      ports:
+        - "5678:5678"
+      environment:
+        - N8N_HOST=localhost
+        - N8N_PORT=5678
+        - N8N_PROTOCOL=http
+        - WEBHOOK_URL=http://localhost:5678/
+      volumes:
+        - n8n_data:/home/node/.n8n
+      depends_on:
+        - ollama
+      restart: unless-stopped
+      networks:
+        - my_network
+    postgres:
+      container_name: pgvector
+      image: pgvector/pgvector:pg15
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres_data:/home/apps/postgres:/var/postgres_data
+      environment:
+        - POSTGRES_PASSWORD=password
+      networks:
+        - my_network
+
+volumes:
+    ollama_data:
+    n8n_data:
+    postgres_data:
+  
+networks:
+    my_network:
