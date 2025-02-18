@@ -1,3 +1,4 @@
 .env
 .ai/
 .venv/
+src/__pycache__/
